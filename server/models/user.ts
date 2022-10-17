@@ -12,4 +12,4 @@ const userSchema = new Schema<IUser>({
     password: { type: String, required: true },
 });
 
-module.exports = model("Users", userSchema);
+export default model("Users", userSchema);
