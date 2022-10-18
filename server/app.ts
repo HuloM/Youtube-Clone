@@ -9,11 +9,8 @@ const port: number = 80;
 
 const connString: string = `${process.env.MONGODB_CONN_STRING}`;
 
+app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-
-app.get("/", (_req, _res) => {
-    _res.send("TypeScript With Express");
-});
 
 app.use(Routes);
 
