@@ -1,9 +1,9 @@
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import "dotenv/config";
 import { connect } from "mongoose";
 import Routes from "./routes/routes";
 import path from "path";
-import multer from "./middleware/multer.middlerware";
+import multerMiddleware from "./middleware/multer.middleware";
 import errorMiddleware from "./middleware/error.middleware";
 
 const app: express.Application = express();
@@ -19,7 +19,7 @@ app.use(
 app.use("/videos", express.static(path.join(__dirname, "/public/videos")));
 
 // configuring express app to use multer, and only accept a single file upload per request
-app.use(multer);
+app.use(multerMiddleware);
 
 app.use(Routes);
 
