@@ -1,9 +1,10 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import "dotenv/config";
 import { connect } from "mongoose";
 import Routes from "./routes/routes";
 import path from "path";
-import multer from "./middleware/multer.uploader";
+import multer from "./middleware/multer.middlerware";
+import errorMiddleware from "./middleware/error.middleware";
 
 const app: express.Application = express();
 const port: number = 80;
@@ -21,6 +22,8 @@ app.use("/videos", express.static(path.join(__dirname, "/public/videos")));
 app.use(multer);
 
 app.use(Routes);
+
+app.use(errorMiddleware);
 
 connect(connString)
     .then((result) => {

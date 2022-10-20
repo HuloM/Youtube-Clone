@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Video from "../models/video/video";
 import { validationResult } from "express-validator";
 import path from "path";
@@ -8,7 +8,11 @@ import { unlink } from "fs";
 // ok
 import { Multer } from "multer";
 
-export async function upload(_req: Request, _res: Response) {
+export async function upload(
+    _req: Request,
+    _res: Response,
+    next: NextFunction
+) {
     try {
         let files;
         if (_req.files) {
@@ -19,10 +23,8 @@ export async function upload(_req: Request, _res: Response) {
         const errors = validationResult(_req);
         if (!errors.isEmpty()) {
             if (files) {
-                console.log(files);
-                console.log(_req.body);
-                deleteFile(files["video"][0].path);
-                deleteFile(files["thumbnail"][0].path);
+                deleteFile(files["video"][0].path, next);
+                deleteFile(files["thumbnail"][0].path, next);
             }
             return _res.status(400).json({ errors: errors.array() });
         }
@@ -46,14 +48,18 @@ export async function upload(_req: Request, _res: Response) {
                 thumbnail_url: "localhost:80/" + video.thumbnail_url,
             });
         }
-    } catch (err) {
-        console.log(err);
+    } catch (e) {
+        if (e instanceof Error) next(e.message);
+        else next("something is wrong");
     }
 }
 
-const deleteFile = async (imagePath: string) => {
+const deleteFile = async (imagePath: string, next: NextFunction) => {
     let filePath = path.join(__dirname, "..", imagePath);
-    await unlink(filePath, (err) => {
-        if (err) console.log(err);
+    await unlink(filePath, (e) => {
+        if (e) {
+            if (e instanceof Error) next(e.message);
+            else next("something is wrong");
+        }
     });
 };

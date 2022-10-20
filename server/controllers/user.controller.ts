@@ -1,9 +1,14 @@
 import { hash, compare } from "bcryptjs";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import User from "../models/user/user";
 import { validationResult } from "express-validator";
+import errorHandler from "../exceptions/HttpException";
 
-export async function signup(_req: Request, _res: Response) {
+export async function signup(
+    _req: Request,
+    _res: Response,
+    next: NextFunction
+) {
     try {
         const errors = validationResult(_req);
         if (!errors.isEmpty()) {
@@ -15,7 +20,7 @@ export async function signup(_req: Request, _res: Response) {
         const password: string = _req.body.password;
 
         const hashPass: string = await hash(password, 12);
-
+        throw new Error("test error");
         const user = await new User({
             username: username,
             email: email,
@@ -24,12 +29,13 @@ export async function signup(_req: Request, _res: Response) {
         return _res.status(201).json({
             message: "user created",
         });
-    } catch (err) {
-        console.log(err);
+    } catch (e) {
+        if (e instanceof Error) next(e.message);
+        else next("something is wrong");
     }
 }
 
-export async function login(_req: Request, _res: Response) {
+export async function login(_req: Request, _res: Response, next: NextFunction) {
     try {
         const errors = validationResult(_req);
         if (!errors.isEmpty()) {
@@ -60,7 +66,8 @@ export async function login(_req: Request, _res: Response) {
             return _res.status(404).json({
                 message: "no user with that username exists",
             });
-    } catch (err) {
-        console.log(err);
+    } catch (e) {
+        if (e instanceof Error) next(e.message);
+        else next("something is wrong");
     }
 }
