@@ -23,17 +23,24 @@ const usernameValidator: CustomValidator = (value) => {
 
 router.put(
     "/signup",
-    body("email").isEmail().custom(emailValidator),
-    body("username").custom(usernameValidator),
-    body("password").isLength({ min: 10 }),
-    body("passwordConfirmation").custom((value, { req }) => {
-        if (value !== req.body.password) {
-            throw new Error("Passwords do not match");
-        }
-        return true;
-    }),
+    body("email").isEmail().custom(emailValidator).trim(),
+    body("username").custom(usernameValidator).trim(),
+    body("password").isLength({ min: 10 }).trim(),
+    body("passwordConfirmation")
+        .trim()
+        .custom((value, { req }) => {
+            if (value !== req.body.password) {
+                throw new Error("Passwords do not match");
+            }
+            return true;
+        }),
     signup
 );
-router.post("/login", login);
+router.post(
+    "/login",
+    body("user").not().isEmpty().trim(),
+    body("password").isLength({ min: 10 }).trim(),
+    login
+);
 
 export default router;
