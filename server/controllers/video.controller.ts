@@ -22,9 +22,23 @@ export async function upload(_req: Request, _res: Response) {
         }
 
         console.log(_req.body);
-        return _res.status(201).json({
-            message: "video uploaded successfully",
-        });
+        if (files) {
+            let video_url = "videos/" + files["video"][0].filename;
+            let thumbnail_url = "thumbnail/" + files["thumbnail"][0].filename;
+            let title = _req.body.title;
+            let likes = 0;
+
+            const video = await new Video({
+                video_url: video_url,
+                thumbnail_url: thumbnail_url,
+                title: title,
+                likes: likes,
+            }).save();
+
+            return _res.status(201).json({
+                message: "video uploaded successfully",
+            });
+        }
     } catch (err) {
         console.log(err);
     }

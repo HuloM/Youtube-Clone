@@ -11,7 +11,11 @@ const port: number = 80;
 const connString: string = `${process.env.MONGODB_CONN_STRING}`;
 
 app.use(express.json());
-app.use("/images", express.static(path.join(__dirname, "public/images")));
+app.use(
+    "/thumbnails",
+    express.static(path.join(__dirname, "/public/thumbnails"))
+);
+app.use("/videos", express.static(path.join(__dirname, "/public/videos")));
 
 // configuring express app to use multer, and only accept a single file upload per request
 app.use(multer);

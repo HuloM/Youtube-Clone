@@ -22,7 +22,9 @@ const storage = multer.diskStorage({
     // setting up custom file names to not overwrite existing files with exact same names
     filename: function (req: Request, file: Express.Multer.File, cb: Function) {
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        const filename = file.originalname.replace("public", "");
+        const filename = file.originalname
+            .replace("public", "")
+            .replace(" ", "");
         cb(null, uniqueSuffix + "-" + filename);
     },
 });
