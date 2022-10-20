@@ -4,6 +4,10 @@ import { validationResult } from "express-validator";
 import path from "path";
 import { unlink } from "fs";
 
+// ????????????????? what even this lets Express.Multer.File exist and also the files property on Requests????????????
+// ok
+import { Multer } from "multer";
+
 export async function upload(_req: Request, _res: Response) {
     try {
         let files;
@@ -15,16 +19,17 @@ export async function upload(_req: Request, _res: Response) {
         const errors = validationResult(_req);
         if (!errors.isEmpty()) {
             if (files) {
+                console.log(files);
+                console.log(_req.body);
                 deleteFile(files["video"][0].path);
                 deleteFile(files["thumbnail"][0].path);
             }
             return _res.status(400).json({ errors: errors.array() });
         }
 
-        console.log(_req.body);
         if (files) {
             let video_url = "videos/" + files["video"][0].filename;
-            let thumbnail_url = "thumbnail/" + files["thumbnail"][0].filename;
+            let thumbnail_url = "thumbnails/" + files["thumbnail"][0].filename;
             let title = _req.body.title;
             let likes = 0;
 
@@ -37,6 +42,8 @@ export async function upload(_req: Request, _res: Response) {
 
             return _res.status(201).json({
                 message: "video uploaded successfully",
+                video_url: "localhost:80/" + video.video_url,
+                thumbnail_url: "localhost:80/" + video.thumbnail_url,
             });
         }
     } catch (err) {

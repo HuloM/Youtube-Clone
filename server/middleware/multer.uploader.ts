@@ -1,6 +1,5 @@
 import { Request } from "express";
 import multer, { Multer } from "multer";
-const express = require("express");
 
 const storage = multer.diskStorage({
     // setting file upload destination to public/images from project root dir
@@ -24,7 +23,7 @@ const storage = multer.diskStorage({
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
         const filename = file.originalname
             .replace("public", "")
-            .replace(" ", "");
+            .replace(" ", "-");
         cb(null, uniqueSuffix + "-" + filename);
     },
 });
