@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { body, CustomValidator, check } from "express-validator";
+import { body, check } from "express-validator";
 import { upload } from "../controllers/video.controller";
 
-import Video from "../models/video/video";
+import authMiddleware from "../middleware/auth.middleware";
 
 const router = Router();
 
@@ -30,6 +30,7 @@ router.put(
         .withMessage(
             "incorrect file type submitted (video must be an MP4 file)"
         ),
+    authMiddleware,
     upload
 );
 

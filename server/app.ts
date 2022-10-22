@@ -1,10 +1,15 @@
-import express from "express";
-import "dotenv/config";
-import { connect } from "mongoose";
-import Routes from "./routes/routes";
 import path from "path";
+
+import express from "express";
+import { connect } from "mongoose";
+
+import "dotenv/config";
+
+import Routes from "./routes/routes";
+
 import multerMiddleware from "./middleware/multer.middleware";
 import errorMiddleware from "./middleware/error.middleware";
+import cookieParser from "cookie-parser";
 
 const app: express.Application = express();
 const port: number = 80;
@@ -20,6 +25,7 @@ app.use("/videos", express.static(path.join(__dirname, "/public/videos")));
 
 // configuring express app to use multer, and only accept a single file upload per request
 app.use(multerMiddleware);
+app.use(cookieParser());
 
 app.use(Routes);
 

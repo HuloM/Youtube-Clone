@@ -8,19 +8,24 @@ import { unlink } from "fs";
 // ok
 import { Multer } from "multer";
 
+import userRequest from "../interfaces/userRequest.interface";
+
+type userReq = userRequest & Request;
+
 export async function upload(
     _req: Request,
     _res: Response,
     next: NextFunction
 ) {
     try {
+        const req = _req as unknown as userRequest;
         let files;
-        if (_req.files) {
-            files = _req.files as {
+        if (req.files) {
+            files = req.files as {
                 [fieldname: string]: Express.Multer.File[];
             };
         }
-        const errors = validationResult(_req);
+        const errors = validationResult(req);
         if (!errors.isEmpty()) {
             if (files) {
                 deleteFile(files["video"][0].path, next);
@@ -32,7 +37,7 @@ export async function upload(
         if (files) {
             let video_url = "videos/" + files["video"][0].filename;
             let thumbnail_url = "thumbnails/" + files["thumbnail"][0].filename;
-            let title = _req.body.title;
+            let title = req.body.title;
             let likes = 0;
 
             const video = await new Video({
@@ -40,6 +45,7 @@ export async function upload(
                 thumbnail_url: thumbnail_url,
                 title: title,
                 likes: likes,
+                user: req.user._id,
             }).save();
 
             return _res.status(201).json({

@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import IVideo from "./IVideo";
+import IVideo from "../../interfaces/video.interface";
 
 const videoSchema = new Schema<IVideo>({
     title: { type: "string", required: true },
