@@ -27,7 +27,7 @@ app.use("/videos", express.static(path.join(__dirname, "/public/videos")));
 app.use(multerMiddleware);
 app.use(cookieParser());
 
-app.use(Routes);
+app.use("/v1", Routes);
 
 app.use(errorMiddleware);
 

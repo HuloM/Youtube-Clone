@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { body, check } from "express-validator";
-import { upload } from "../controllers/video.controller";
+import { upload, deleteVideo } from "../controllers/video.controller";
 
 import authMiddleware from "../middleware/auth.middleware";
 
@@ -32,6 +32,13 @@ router.put(
         ),
     authMiddleware,
     upload
+);
+
+router.delete(
+    "/delete",
+    body("video_id").not().isEmpty().trim(),
+    authMiddleware,
+    deleteVideo
 );
 
 export default router;

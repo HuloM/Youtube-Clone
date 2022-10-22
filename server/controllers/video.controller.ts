@@ -60,8 +60,38 @@ export async function upload(
     }
 }
 
+export async function deleteVideo(
+    _req: Request,
+    _res: Response,
+    next: NextFunction
+) {
+    try {
+        const req = _req as unknown as userRequest;
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return _res.status(400).json({ errors: errors.array() });
+        }
+
+        const video = await Video.findById(req.body.video_id);
+        if (video && video.user.toString() === req.user._id.toString()) {
+            deleteFile("public/" + video.video_url, next);
+            deleteFile("public/" + video.thumbnail_url, next);
+        }
+
+        await Video.deleteOne({ _id: req.body.video_id });
+
+        return _res.status(201).json({
+            message: "video deleted successfully",
+        });
+    } catch (e) {
+        if (e instanceof Error) next(e.message);
+        else next("something is wrong");
+    }
+}
+
 const deleteFile = async (imagePath: string, next: NextFunction) => {
     let filePath = path.join(__dirname, "..", imagePath);
+    console.log(filePath);
     await unlink(filePath, (e) => {
         if (e) {
             if (e instanceof Error) next(e.message);
