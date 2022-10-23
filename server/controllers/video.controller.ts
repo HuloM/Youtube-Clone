@@ -73,16 +73,20 @@ export async function deleteVideo(
         }
 
         const video = await Video.findById(req.body.video_id);
-        if (video && video.user.toString() === req.user._id.toString()) {
-            deleteFile("public/" + video.video_url, next);
-            deleteFile("public/" + video.thumbnail_url, next);
+        if (video) {
+            if (video.user.toString() === req.user._id.toString()) {
+                deleteFile("public/" + video.video_url, next);
+                deleteFile("public/" + video.thumbnail_url, next);
+                await Video.deleteOne({ _id: req.body.video_id });
+
+                return _res.status(201).json({
+                    message: "video deleted successfully",
+                });
+            } else
+                return _res.status(401).json({
+                    message: "You are not the video Creator",
+                });
         }
-
-        await Video.deleteOne({ _id: req.body.video_id });
-
-        return _res.status(201).json({
-            message: "video deleted successfully",
-        });
     } catch (e) {
         if (e instanceof Error) next(e.message);
         else next("something is wrong");
