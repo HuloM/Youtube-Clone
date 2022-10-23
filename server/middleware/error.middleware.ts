@@ -3,13 +3,13 @@ import HttpException from "../exceptions/HttpException";
 
 function errorMiddleware(
     error: HttpException,
-    request: Request,
-    response: Response,
+    _req: Request,
+    _res: Response,
     next: NextFunction
 ) {
     const status = error.status || 500;
     const message = error.message || "Something went wrong";
-    response.status(status).send({
+    _res.status(status).send({
         status,
         message,
     });

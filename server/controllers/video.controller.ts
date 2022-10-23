@@ -87,6 +87,52 @@ export async function deleteVideo(
                     message: "You are not the video Creator",
                 });
         }
+        return _res.status(404).json({
+            message: "Video not found, check the ID again.",
+        });
+    } catch (e) {
+        if (e instanceof Error) next(e.message);
+        else next("something is wrong");
+    }
+}
+
+export async function likeVideo(
+    _req: Request,
+    _res: Response,
+    next: NextFunction
+) {
+    try {
+        const req = _req as unknown as userRequest;
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return _res.status(400).json({ errors: errors.array() });
+        }
+
+        const video = await Video.findById(req.body.video_id);
+        if (video) {
+            if (video.user.toString() === req.user._id.toString()) {
+                return _res.status(400).json({
+                    message: "You cannot like your own video",
+                });
+            } else if (req.user._id.toString()) {
+                // TODO add in a way to link user with their like
+                console.log(video.likes);
+                video.likes += 1;
+                console.log(video.likes);
+
+                video.save();
+
+                return _res.status(201).json({
+                    message: "video was liked",
+                });
+            } else
+                return _res.status(401).json({
+                    message: "You are not logged in and cannot like a video",
+                });
+        }
+        return _res.status(404).json({
+            message: "Video not found, check the ID again.",
+        });
     } catch (e) {
         if (e instanceof Error) next(e.message);
         else next("something is wrong");

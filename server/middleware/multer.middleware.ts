@@ -4,7 +4,7 @@ import multer, { Multer } from "multer";
 const storage = multer.diskStorage({
     // setting file upload destination to public/images from project root dir
     destination: function (
-        req: Request,
+        _req: Request,
         file: Express.Multer.File,
         cb: Function
     ) {
@@ -19,7 +19,11 @@ const storage = multer.diskStorage({
         cb(null, path);
     },
     // setting up custom file names to not overwrite existing files with exact same names
-    filename: function (req: Request, file: Express.Multer.File, cb: Function) {
+    filename: function (
+        _req: Request,
+        file: Express.Multer.File,
+        cb: Function
+    ) {
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
         const filename = file.originalname
             .replace("public", "")
@@ -28,7 +32,7 @@ const storage = multer.diskStorage({
     },
 });
 // check if file is of type png, jpg, or jpeg
-const fileFilter = (req: Request, file: Express.Multer.File, cb: Function) => {
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: Function) => {
     if (
         file.mimetype === "image/png" ||
         file.mimetype === "image/jpg" ||
