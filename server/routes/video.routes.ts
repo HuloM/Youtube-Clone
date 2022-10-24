@@ -4,6 +4,7 @@ import {
     upload,
     deleteVideo,
     likeVideo,
+    getSingleVideo,
 } from "../controllers/video.controller";
 
 import authMiddleware from "../middleware/auth.middleware";
@@ -50,6 +51,12 @@ router.put(
     body("video_id").not().isEmpty().trim(),
     authMiddleware,
     likeVideo
+);
+
+router.get(
+    "/getSingle",
+    body("video_id").not().isEmpty().trim(),
+    getSingleVideo
 );
 
 export default router;

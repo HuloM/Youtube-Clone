@@ -9,6 +9,7 @@ import { unlink } from "fs";
 import { Multer } from "multer";
 
 import userRequest from "../interfaces/userRequest.interface";
+import userDocument from "../interfaces/user.interface";
 
 type userReq = userRequest & Request;
 
@@ -52,6 +53,7 @@ export async function upload(
                 message: "video uploaded successfully",
                 video_url: "localhost:80/" + video.video_url,
                 thumbnail_url: "localhost:80/" + video.thumbnail_url,
+                id: video._id,
             });
         }
     } catch (e) {
@@ -116,9 +118,7 @@ export async function likeVideo(
                 });
             } else if (req.user._id.toString()) {
                 // TODO add in a way to link user with their like
-                console.log(video.likes);
                 video.likes += 1;
-                console.log(video.likes);
 
                 video.save();
 
@@ -139,6 +139,47 @@ export async function likeVideo(
     }
 }
 
+export async function getSingleVideo(
+    _req: Request,
+    _res: Response,
+    next: NextFunction
+) {
+    try {
+        const req = _req as unknown as userRequest;
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return _res.status(400).json({ errors: errors.array() });
+        }
+
+        const video = await Video.findById(req.body.video_id)
+            .populate<{ user: userDocument }>("user")
+            .orFail();
+        if (video) {
+            cleanUserData(video);
+            const user = getUser(video.user);
+
+            const videoURL = await getLink(video.video_url, next);
+            const thumbnailURL = getLink(video.thumbnail_url, next);
+
+            return _res.status(201).json({
+                message: "video retrieved",
+                video: {
+                    likes: video.likes,
+                    url: videoURL,
+                    creator: user,
+                    title: video.title,
+                },
+            });
+        } else
+            return _res.status(404).json({
+                message: "Video Not Found",
+            });
+    } catch (e) {
+        if (e instanceof Error) next(e.message);
+        else next("something is wrong");
+    }
+}
+
 const deleteFile = async (imagePath: string, next: NextFunction) => {
     let filePath = path.join(__dirname, "..", imagePath);
     console.log(filePath);
@@ -149,3 +190,34 @@ const deleteFile = async (imagePath: string, next: NextFunction) => {
         }
     });
 };
+
+const getLink = async (imagePath: string, next: NextFunction) => {
+    const link = "localhost:80/" + imagePath;
+    console.log(link);
+
+    return link;
+};
+
+function cleanUserData(
+    video: Omit<
+        import("mongoose").Document<
+            unknown,
+            any,
+            import("../interfaces/video.interface").default
+        > &
+            import("../interfaces/video.interface").default & {
+                _id: import("mongoose").Types.ObjectId;
+            },
+        "user"
+    > & { user: userDocument }
+) {
+    video.user.email = "";
+    video.user.password = "";
+    video.user.__v = "";
+    video.user._id = "";
+}
+function getUser(user: userDocument) {
+    return {
+        username: user.username,
+    };
+}
