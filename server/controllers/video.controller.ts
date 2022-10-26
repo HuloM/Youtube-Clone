@@ -1,8 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import Video from "../models/video/video";
 import { validationResult } from "express-validator";
+
+import Video from "../models/video/video";
+
 import path from "path";
 import { unlink } from "fs";
+
+import { Error } from "mongoose";
 
 // ????????????????? what even this lets Express.Multer.File exist and also the files property on Requests????????????
 // ok
@@ -10,8 +14,10 @@ import { Multer } from "multer";
 
 import userRequest from "../interfaces/userRequest.interface";
 import userDocument from "../interfaces/user.interface";
+import VideoNotFoundException from "../exceptions/VideoNotFoundException";
+import NotAuthorizedException from "../exceptions/NotAuthorizedException";
 
-type userReq = userRequest & Request;
+const POSTS_PER_PAGE = 15;
 
 export async function upload(
     _req: Request,
@@ -84,16 +90,11 @@ export async function deleteVideo(
                 return _res.status(201).json({
                     message: "video deleted successfully",
                 });
-            } else
-                return _res.status(401).json({
-                    message: "You are not the video Creator",
-                });
+            } else next(new NotAuthorizedException());
         }
-        return _res.status(404).json({
-            message: "Video not found, check the ID again.",
-        });
     } catch (e) {
-        if (e instanceof Error) next(e.message);
+        if (e instanceof Error.CastError)
+            next(new VideoNotFoundException(_req.body.video_id));
         else next("something is wrong");
     }
 }
@@ -112,11 +113,10 @@ export async function likeVideo(
 
         const video = await Video.findById(req.body.video_id);
         if (video) {
-            if (video.user.toString() === req.user._id.toString()) {
-                return _res.status(400).json({
-                    message: "You cannot like your own video",
-                });
-            } else if (req.user._id.toString()) {
+            if (
+                req.user._id.toString() &&
+                video.user.toString() !== req.user._id.toString()
+            ) {
                 // TODO add in a way to link user with their like
                 video.likes += 1;
 
@@ -125,21 +125,16 @@ export async function likeVideo(
                 return _res.status(201).json({
                     message: "video was liked",
                 });
-            } else
-                return _res.status(401).json({
-                    message: "You are not logged in and cannot like a video",
-                });
+            } else next(new NotAuthorizedException());
         }
-        return _res.status(404).json({
-            message: "Video not found, check the ID again.",
-        });
     } catch (e) {
-        if (e instanceof Error) next(e.message);
+        if (e instanceof Error.CastError)
+            next(new VideoNotFoundException(_req.body.video_id));
         else next("something is wrong");
     }
 }
 
-export async function getSingleVideo(
+export async function getVideo(
     _req: Request,
     _res: Response,
     next: NextFunction
@@ -151,15 +146,14 @@ export async function getSingleVideo(
             return _res.status(400).json({ errors: errors.array() });
         }
 
-        const video = await Video.findById(req.body.video_id)
-            .populate<{ user: userDocument }>("user")
-            .orFail();
+        const video = await Video.findById(req.body.video_id).populate<{
+            user: userDocument;
+        }>("user");
         if (video) {
             cleanUserData(video);
             const user = getUser(video.user);
 
             const videoURL = await getLink(video.video_url, next);
-            const thumbnailURL = getLink(video.thumbnail_url, next);
 
             return _res.status(201).json({
                 message: "video retrieved",
@@ -170,10 +164,45 @@ export async function getSingleVideo(
                     title: video.title,
                 },
             });
-        } else
-            return _res.status(404).json({
-                message: "Video Not Found",
+        }
+    } catch (e) {
+        if (e instanceof Error.CastError)
+            next(new VideoNotFoundException(_req.body.video_id));
+        else next("something is wrong");
+    }
+}
+
+export async function getVideos(
+    _req: Request,
+    _res: Response,
+    next: NextFunction
+) {
+    try {
+        const req = _req as unknown as userRequest;
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return _res.status(400).json({ errors: errors.array() });
+        }
+        const page = +req.body.page || 1;
+
+        const videos = await Video.find()
+            // populate() grabs the related data to the reference collection
+            // here we are grabbing the user document that belongs to the post
+            .skip((page - 1) * POSTS_PER_PAGE)
+            // limit 3 posts per page
+            .limit(POSTS_PER_PAGE)
+            .populate<{ user: userDocument }>("user")
+            .orFail();
+        if (videos) {
+            videos.forEach((video) => {
+                cleanUserData(video);
             });
+
+            return _res.status(201).json({
+                message: "Videos retrieved",
+                videos: videos,
+            });
+        } else next("something is wrong");
     } catch (e) {
         if (e instanceof Error) next(e.message);
         else next("something is wrong");
