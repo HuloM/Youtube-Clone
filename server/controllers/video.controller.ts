@@ -1,21 +1,20 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
 
-import Video from "../models/video/video";
+import Video from "../models/video/video.schema";
 
 import path from "path";
 import { unlink } from "fs";
 
 import { Error } from "mongoose";
-
-// ????????????????? what even this lets Express.Multer.File exist and also the files property on Requests????????????
-// ok
 import { Multer } from "multer";
 
 import userRequest from "../interfaces/userRequest.interface";
 import userDocument from "../interfaces/user.interface";
+
 import VideoNotFoundException from "../exceptions/VideoNotFoundException";
 import NotAuthorizedException from "../exceptions/NotAuthorizedException";
+import VideosNotFoundException from "../exceptions/VideosNotFoundException";
 
 const POSTS_PER_PAGE = 15;
 
@@ -57,14 +56,13 @@ export async function upload(
 
             return _res.status(201).json({
                 message: "video uploaded successfully",
-                video_url: "localhost:80/" + video.video_url,
+                video_url: getLink(video.video_url),
                 thumbnail_url: "localhost:80/" + video.thumbnail_url,
                 id: video._id,
             });
         }
     } catch (e) {
-        if (e instanceof Error) next(e.message);
-        else next("something is wrong");
+        next("something is wrong");
     }
 }
 
@@ -146,14 +144,16 @@ export async function getVideo(
             return _res.status(400).json({ errors: errors.array() });
         }
 
-        const video = await Video.findById(req.body.video_id).populate<{
-            user: userDocument;
-        }>("user");
+        const video = await Video.findById(req.body.video_id)
+            .populate<{
+                user: userDocument;
+            }>("user")
+            .orFail();
         if (video) {
             cleanUserData(video);
             const user = getUser(video.user);
 
-            const videoURL = await getLink(video.video_url, next);
+            const videoURL = getLink(video.video_url);
 
             return _res.status(201).json({
                 message: "video retrieved",
@@ -194,7 +194,9 @@ export async function getVideos(
             .populate<{ user: userDocument }>("user")
             .orFail();
         if (videos) {
-            videos.forEach((video) => {
+            videos.forEach(async (video) => {
+                video.video_url = getLink(video.video_url);
+                video.thumbnail_url = getLink(video.thumbnail_url);
                 cleanUserData(video);
             });
 
@@ -202,16 +204,16 @@ export async function getVideos(
                 message: "Videos retrieved",
                 videos: videos,
             });
-        } else next("something is wrong");
+        }
     } catch (e) {
-        if (e instanceof Error) next(e.message);
+        if (e instanceof Error.DocumentNotFoundError)
+            next(new VideosNotFoundException());
         else next("something is wrong");
     }
 }
 
 const deleteFile = async (imagePath: string, next: NextFunction) => {
     let filePath = path.join(__dirname, "..", imagePath);
-    console.log(filePath);
     await unlink(filePath, (e) => {
         if (e) {
             if (e instanceof Error) next(e.message);
@@ -220,12 +222,7 @@ const deleteFile = async (imagePath: string, next: NextFunction) => {
     });
 };
 
-const getLink = async (imagePath: string, next: NextFunction) => {
-    const link = "localhost:80/" + imagePath;
-    console.log(link);
-
-    return link;
-};
+const getLink = (imagePath: string) => "localhost:80/" + imagePath;
 
 function cleanUserData(
     video: Omit<
@@ -245,6 +242,7 @@ function cleanUserData(
     video.user.__v = "";
     video.user._id = "";
 }
+
 function getUser(user: userDocument) {
     return {
         username: user.username,

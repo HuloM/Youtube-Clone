@@ -2,7 +2,7 @@ import { Router } from "express";
 import { body, CustomValidator } from "express-validator";
 import { signup, login } from "../controllers/user.controller";
 
-import User from "../models/user/user";
+import User from "../models/user/user.schema";
 
 const router = Router();
 const emailValidator: CustomValidator = (value) => {

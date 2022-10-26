@@ -1,6 +1,6 @@
 import { hash, compare } from "bcryptjs";
 import { Request, Response, NextFunction } from "express";
-import User from "../models/user/user";
+import User from "../models/user/user.schema";
 import { validationResult } from "express-validator";
 import { Document, Types } from "mongoose";
 import userDocument from "../interfaces/user.interface";

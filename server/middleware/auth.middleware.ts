@@ -5,7 +5,7 @@ import { DataStoredInToken } from "../interfaces/token.interface";
 
 import { verify } from "jsonwebtoken";
 
-import User from "../models/user/user";
+import User from "../models/user/user.schema";
 
 async function authMiddleware(
     _req: Request,

@@ -1,6 +1,6 @@
 import path from "path";
 
-import express from "express";
+import express, { Request } from "express";
 import { connect } from "mongoose";
 
 import "dotenv/config";
@@ -10,6 +10,7 @@ import Routes from "./routes/routes";
 import multerMiddleware from "./middleware/multer.middleware";
 import errorMiddleware from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 const app: express.Application = express();
 const port: number = 80;
@@ -17,6 +18,9 @@ const port: number = 80;
 const connString: string = `${process.env.MONGODB_CONN_STRING}`;
 
 app.use(express.json());
+
+app.use(cors<Request>());
+
 app.use(
     "/thumbnails",
     express.static(path.join(__dirname, "/public/thumbnails"))
